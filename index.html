@@ -18,7 +18,6 @@
             --bg-color: #ffffff;
             --text-color: #000000;
             --bottom-safe: calc(var(--lvh, 100vh) - var(--tg-viewport-height, 100vh));
-            --tabs-height: calc(64px + var(--bottom-safe));
         }
         .dark {
             --bg-color: #000000;
@@ -44,6 +43,7 @@
             justify-content: space-around;
             background-color: #ccc;
             border-radius: 16px;
+            height: 64px;
             margin: 16px;
             position: fixed;
             bottom: env(safe-area-inset-bottom, 0px);
