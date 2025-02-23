@@ -12,6 +12,7 @@
             background-color: var(--bg-color);
             color: var(--text-color);
             font-family: sans-serif;
+            overflow: hidden; /* Отключаем прокрутку страницы */
         }
         :root {
             --bg-color: #ffffff;
@@ -41,6 +42,11 @@
             justify-content: space-around;
             background-color: var(--bottom-bar-bg);
             padding: 10px;
+            padding-bottom: calc(10px + env(safe-area-inset-bottom)); /* Учитываем safe-area */
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
         }
         .bottom-bar button {
             padding: 10px;
