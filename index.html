@@ -46,15 +46,13 @@
             border-radius: 16px;
             height: var(--tabs-height);
             margin: 16px;
-            padding-bottom: env(safe-area-inset-bottom, 0px); /* Учитываем safe-area */
             position: fixed;
-            bottom: 0;
+            bottom: env(safe-area-inset-bottom, 0px);
             left: 0;
             right: 0;
         }
         .bottom-bar button {
-            padding: 10px;
-            background-color: var(--button-bg);
+            padding: 12px;
             color: var(--button-text);
             border: none;
             cursor: pointer;
