@@ -9,24 +9,37 @@
         body {
             margin: 0;
             padding: 0;
-            background-color: #1a1a1a; /* Темный фон */
-            color: #fff; /* Белый текст */
+            background-color: var(--bg-color);
+            color: var(--text-color);
             font-family: sans-serif;
-            overflow: hidden;
+            overflow: hidden; /* Отключаем прокрутку страницы */
+        }
+        :root {
+            --bg-color: #ffffff;
+            --text-color: #000000;
+            --bottom-safe: calc(var(--lvh, 100vh) - var(--tg-viewport-height, 100vh));
+        }
+        .dark {
+            --bg-color: #000000;
+            --text-color: #ffffff;
         }
         #app {
             display: flex;
             flex-direction: column;
             height: 100vh;
-            padding: 16px;
+            padding-top: calc(var(--tg-safe-area-inset-top, 0px) + var(--tg-content-safe-area-inset-top, 0px) + 15px);
+            padding-left: 16px;
+            padding-right: 16px;
+        }
+        #header {
+            padding: 10px;
+            background-color: var(--header-bg);
+            color: var(--header-text);
         }
         .tab-content {
             flex: 1;
             overflow: auto;
-            background-color: #2a2a2a; /* Темный фон для вкладок */
-            padding: 20px;
-            border-radius: 10px;
-            margin-top: 10px;
+            /*padding: 16px;*/
         }
         .bottom-bar {
             display: flex;
@@ -36,55 +49,52 @@
             height: 64px;
             margin: 16px;
             position: fixed;
-            bottom: 16px;
+            bottom: calc(env(safe-area-inset-bottom, 0px) + 16px);
             left: 0;
             right: 0;
         }
         .bottom-bar button {
             padding: 12px;
-            background-color: #4CAF50; /* Зеленые кнопки */
-            color: white;
+            background-color: var(--button-bg);
+            color: var(--button-text);
             border: none;
             cursor: pointer;
         }
-        .tabs {
-            margin-bottom: 20px;
-        }
-        .tabs button {
-            padding: 10px 20px;
-            margin-right: 10px;
-            background-color: #4CAF50; /* Зеленые кнопки */
-            border: none;
-            color: white;
+        #clicker {
+            width: 240px;
+            height: 240px;
+            margin: 20px auto;
             cursor: pointer;
+            background-image: url(farmer.png);
+            background-size: cover;
         }
-        .tabs button:hover {
-            background-color: #45a049;
-        }
-        .tab-panel {
-            display: none;
-        }
-        .tab-panel.active {
-            display: block;
-        }
-        .crop-block, .animal-block {
-            background-color: #3a3a3a; /* Темный фон блоков */
-            padding: 10px;
+        .animal-block {
             margin: 10px 0;
-            border-radius: 5px;
+            padding: 10px;
+            border: 1px solid #ccc;
         }
-        button {
-            background-color: #4CAF50;
-            color: white;
-            border: none;
-            padding: 5px 10px;
-            cursor: pointer;
+        .resource-list {
+            list-style: none;
+            padding: 0;
+        }
+        .resource-list li {
+            margin: 5px 0;
+        }
+        .daily-reward, .market-item {
+            margin: 10px 0;
+            padding: 10px;
+            border: 1px solid #ccc;
         }
         button:disabled {
-            background-color: #666;
             opacity: 0.6;
             cursor: not-allowed;
         }
+        .tg-content-safe-area {
+            padding-top: var(--tg-safe-area-top, 0px);
+            padding-bottom: var(--tg-safe-area-bottom, 0px);
+            padding-left: var(--tg-safe-area-left, 0px);
+            padding-right: var(--tg-safe-area-right, 0px);
+            }
     </style>
 </head>
 <body>
@@ -99,18 +109,7 @@
         </div>
         <div class="tab-content" id="farm-tab" style="display: none;">
             <h2>Ферма</h2>
-            <div class="tabs">
-                <button data-tab="crops">Культуры</button>
-                <button data-tab="animals">Животные</button>
-            </div>
-            <div id="crops" class="tab-panel active">
-                <h3>Культуры</h3>
-                <div id="crops-list"></div>
-            </div>
-            <div id="animals" class="tab-panel">
-                <h3>Животные</h3>
-                <div id="animals-list"></div>
-            </div>
+            <div id="animals"></div>
         </div>
         <div class="tab-content" id="warehouse-tab" style="display: none;">
             <h2>Склад</h2>
@@ -120,10 +119,17 @@
             <h2>Город</h2>
             <button id="daily-reward">Получить ежедневную награду</button>
             <button id="fortune-wheel">Крутить колесо фортуны</button>
+            <div id="crystal-shop">
+                <h3>Магазин кристаллов</h3>
+                <button onclick="buyCrystals(10, 100)">Купить 10 💎 за 100₽</button>
+                <button onclick="buyCrystals(50, 450)">Купить 50 💎 за 450₽</button>
+            </div>
         </div>
         <div class="tab-content" id="top-tab" style="display: none;">
-            <h3>Рейтинг</h3>
-            <ul id="rating-list"></ul>
+            <div id="rating">
+                <h3>Рейтинг</h3>
+                <ul id="rating-list"></ul>
+            </div>
         </div>
         <div class="bottom-bar">
             <button data-target="farm-tab">Ферма</button>
@@ -134,217 +140,344 @@
         </div>
     </div>
     <script>
-    Telegram.WebApp.onEvent('themeChanged', () => {
-        document.documentElement.className = Telegram.WebApp.colorScheme;
-    });
-    document.documentElement.className = Telegram.WebApp.colorScheme;
-    Telegram.WebApp.requestFullscreen();
-
-    const userId = Telegram.WebApp.initDataUnsafe.user.id;
-    const storageKey = `farm_game_${userId}`;
-    let userData = JSON.parse(localStorage.getItem(storageKey)) || {
-        coins: 0,
-        crystals: 0,
-        warehouse_level: 1,
-        farm_level: 1,
-        crops: {
-            wheat: { amount: 0, producing: false, endTime: 0 }, // Пшеница
-            potato: { amount: 0, producing: false, endTime: 0 }, // Картофель
-            carrot: { amount: 0, producing: false, endTime: 0 }  // Морковь
-        },
-        animals: {
-            chicken: { amount: 0, requiredCrop: 'wheat' }, // Курица требует пшеницу
-            sheep: { amount: 0, requiredCrop: 'potato' },  // Овца требует картофель
-            cow: { amount: 0, requiredCrop: 'carrot' }     // Корова требует морковь
-        },
-        resources: {
-            eggs: 0,
-            wool: 0,
-            milk: 0,
-            boards: 0,
-            nails: 0
-        },
-        production: {
-            eggs: { startTime: 0, isProducing: false },
-            wool: { startTime: 0, isProducing: false },
-            milk: { startTime: 0, isProducing: false }
-        },
-        lastDailyClaim: 0,
-        shop_slots: 3,
-        myShopItems: []
-    };
-    localStorage.setItem(storageKey, JSON.stringify(userData));
-
-    // Сохранение данных
-    function saveUserData() {
-        localStorage.setItem(storageKey, JSON.stringify(userData));
-    }
-
-    // Обновление отображения монет и кристаллов
-    function updateCoinDisplay() {
-        document.getElementById('coin-count').textContent = `Монеты: ${userData.coins}`;
-        document.getElementById('crystal-count').textContent = `Кристаллы: ${userData.crystals}`;
-    }
-    updateCoinDisplay();
-
-    // Кликер для монет
-    document.getElementById('clicker').addEventListener('click', () => {
-        userData.coins += 1;
-        saveUserData();
-        updateCoinDisplay();
-    });
-
-    // Переключение основных вкладок
-    document.querySelectorAll('.bottom-bar button').forEach(button => {
-        button.addEventListener('click', () => {
-            const target = button.getAttribute('data-target');
-            document.querySelectorAll('.tab-content').forEach(tab => {
-                tab.style.display = tab.id === target ? 'block' : 'none';
-            });
-            if (target === 'farm-tab') updateFarmTab();
-            else if (target === 'warehouse-tab') updateWarehouseTab();
-            else if (target === 'town-tab') updateTownTab();
-        });
-    });
-
-    // Обновление вкладки "Ферма"
-    function updateFarmTab() {
-        updateCropsTab();
-        updateAnimalsTab();
-    }
-
-    // Обновление таба "Культуры"
-    function updateCropsTab() {
-        const cropsList = document.getElementById('crops-list');
-        cropsList.innerHTML = '';
-        const crops = [
-            { id: 'wheat', name: 'Пшеница' },
-            { id: 'potato', name: 'Картофель' },
-            { id: 'carrot', name: 'Морковь' }
-        ];
-        crops.forEach(crop => {
-            const data = userData.crops[crop.id];
-            let status = '';
-            if (data.producing) {
-                const remaining = data.endTime - Date.now();
-                if (remaining > 0) {
-                    status = `Производство... ${Math.ceil(remaining / 1000)} сек`;
-                } else {
-                    userData.crops[crop.id].amount += 1;
-                    userData.crops[crop.id].producing = false;
-                    saveUserData();
-                    status = 'Завершено. +1 единица.';
-                }
-            } else {
-                status = `<button onclick="produceCrop('${crop.id}')">Произвести</button>`;
-            }
-            const cropBlock = document.createElement('div');
-            cropBlock.className = 'crop-block';
-            cropBlock.innerHTML = `<p>${crop.name}: ${data.amount}</p><p>${status}</p>`;
-            cropsList.appendChild(cropBlock);
-        });
-    }
-
-    // Обновление таба "Животные"
-    function updateAnimalsTab() {
-        const animalsList = document.getElementById('animals-list');
-        animalsList.innerHTML = '';
-        const animals = [
-            { id: 'chicken', name: 'Курица', resource: 'eggs' },
-            { id: 'sheep', name: 'Овца', resource: 'wool' },
-            { id: 'cow', name: 'Корова', resource: 'milk' }
-        ];
-        animals.forEach(animal => {
-            const data = userData.animals[animal.id];
-            const requiredCrop = data.requiredCrop;
-            const canProduce = userData.crops[requiredCrop].amount > 0;
-            let button = canProduce
-                ? `<button onclick="produceAnimal('${animal.id}')">Произвести</button>`
-                : `Требуется: ${requiredCrop}`;
-            const animalBlock = document.createElement('div');
-            animalBlock.className = 'animal-block';
-            animalBlock.innerHTML = `<p>${animal.name}: ${data.amount}</p>${button}`;
-            animalsList.appendChild(animalBlock);
-        });
-    }
-
-    // Производство культур
-    function produceCrop(crop) {
-        if (userData.crops[crop].producing) {
-            alert(`Производство ${crop} уже идет!`);
-            return;
+        function setThemeClass() {
+            document.documentElement.className = Telegram.WebApp.colorScheme;
         }
-        const productionTime = 60 * 1000; // 1 минута
-        userData.crops[crop].producing = true;
-        userData.crops[crop].endTime = Date.now() + productionTime;
-        saveUserData();
-        updateFarmTab();
-        setTimeout(() => {
-            userData.crops[crop].amount += 1;
-            userData.crops[crop].producing = false;
+        Telegram.WebApp.onEvent('themeChanged', setThemeClass);
+        setThemeClass();
+        Telegram.WebApp.requestFullscreen();
+
+        const userId = Telegram.WebApp.initDataUnsafe.user.id;
+        const storageKey = `farm_game_${userId}`;
+        let userData = JSON.parse(localStorage.getItem(storageKey));
+
+        const warehouseLevels = [1000, 3000, 5000, 7000, 10000];
+
+        if (!userData) {
+            userData = {
+                coins: 0,
+                crystals: 0,
+                warehouse_level: 1,
+                farm_level: 1,
+                animals: {
+                    chickens: 5,
+                    sheep: 0,
+                    cows: 0,
+                    bees: 0
+                },
+                resources: {
+                    eggs: 0,
+                    wool: 0,
+                    milk: 0,
+                    honey: 0,
+                    boards: 0,
+                    nails: 0
+                },
+                production: {
+                    eggs: { startTime: 0, isProducing: false },
+                    wool: { startTime: 0, isProducing: false },
+                    milk: { startTime: 0, isProducing: false },
+                    honey: { startTime: 0, isProducing: false }
+                },
+                lastDailyClaim: 0,
+                shop_slots: 3,
+                myShopItems: []
+            };
+            localStorage.setItem(storageKey, JSON.stringify(userData));
+        }
+
+        function saveUserData() {
+            localStorage.setItem(storageKey, JSON.stringify(userData));
+        }
+
+        function updateCoinDisplay() {
+            document.getElementById('coin-count').textContent = `Монеты: ${userData.coins}`;
+            document.getElementById('crystal-count').textContent = `Кристаллы: ${userData.crystals}`;
+        }
+        updateCoinDisplay();
+
+
+
+        document.getElementById('clicker').addEventListener('click', () => {
+            userData.coins += 1;
+            saveUserData();
+            updateCoinDisplay();
+        });
+
+
+        document.querySelectorAll('.bottom-bar button').forEach(button => {
+            button.addEventListener('click', () => {
+                const target = button.getAttribute('data-target');
+                document.querySelectorAll('.tab-content').forEach(tab => {
+                    tab.style.display = tab.id === target ? 'block' : 'none';
+                });
+                if (target === 'farm-tab') {
+                    updateFarmTab();
+                } else if (target === 'warehouse-tab') {
+                    updateWarehouseTab();
+                } else if (target === 'town-tab') {
+                    updateTownTab();
+                } else if (target === 'market-tab') {
+                    updateMarketTab();
+                }
+            });
+        });
+
+
+        function getProductionTime(resource, farmLevel) {
+            const productionTimes = {
+                eggs: {
+                    1: 3 * 60 * 60 * 1000,
+                    2: 2.5 * 60 * 60 * 1000,
+                    3: 2 * 60 * 60 * 1000,
+                    4: 1.5 * 60 * 60 * 1000,
+                    5: 1 * 60 * 60 * 1000
+                },
+                wool: {
+                    1: 6 * 60 * 60 * 1000,
+                    2: 5.5 * 60 * 60 * 1000,
+                    3: 5 * 60 * 60 * 1000,
+                    4: 4.5 * 60 * 60 * 1000,
+                    5: 4 * 60 * 60 * 1000
+                },
+                milk: {
+                    1: 8 * 60 * 60 * 1000,
+                    2: 7 * 60 * 60 * 1000,
+                    3: 6 * 60 * 60 * 1000,
+                    4: 5 * 60 * 60 * 1000,
+                    5: 4 * 60 * 60 * 1000
+                },
+                honey: {
+                    1: 12 * 60 * 60 * 1000,
+                    2: 10 * 60 * 60 * 1000,
+                    3: 8 * 60 * 60 * 1000,
+                    4: 6 * 60 * 60 * 1000,
+                    5: 4 * 60 * 60 * 1000
+                }
+            };
+            return productionTimes[resource][farmLevel];
+        }
+
+        function updateFarmTab() {
+            const animalsDiv = document.getElementById('animals');
+            animalsDiv.innerHTML = '';
+            const animalTypes = ['chickens', 'sheep', 'cows', 'bees'];
+            animalTypes.forEach(type => {
+                const count = userData.animals[type];
+                if (count > 0) {
+                    const resource = type === 'chickens' ? 'eggs' : type === 'sheep' ? 'wool' : type === 'cows' ? 'milk' : 'honey';
+                    const production = userData.production[resource];
+                    let status = '';
+                    if (production.isProducing) {
+                        const duration = getProductionTime(resource, userData.farm_level);
+                        const endTime = production.startTime + duration;
+                        const currentTime = Date.now();
+                        if (currentTime >= endTime) {
+                            const amount = count;
+                            const capacity = warehouseLevels[userData.warehouse_level - 1];
+                            const used = Object.values(userData.resources).reduce((sum, val) => sum + val, 0);
+                            const free = capacity - used;
+                            const toAdd = Math.min(amount, free);
+                            userData.resources[resource] += toAdd;
+                            production.isProducing = false;
+                            saveUserData();
+                            status = `Производство завершено. Добавлено ${toAdd} ${resource}.`;
+                        } else {
+                            const remaining = endTime - currentTime;
+                            status = `Идет производство... Осталось: ${Math.ceil(remaining / 1000)} секунд`;
+                        }
+                    } else {
+                        status = `<button onclick="startProduction('${resource}')">Произвести ${resource}</button>`;
+                    }
+                    const animalBlock = document.createElement('div');
+                    animalBlock.className = 'animal-block';
+                    animalBlock.innerHTML = `<p>${type.charAt(0).toUpperCase() + type.slice(1)}: ${count}</p><p>${status}</p>`;
+                    animalsDiv.appendChild(animalBlock);
+                }
+            });
+        }
+
+        function startProduction(resource) {
+            const animalType = resource === 'eggs' ? 'chickens' : resource === 'wool' ? 'sheep' : resource === 'milk' ? 'cows' : 'bees';
+            if (userData.animals[animalType] === 0) {
+                alert(`У вас нет ${animalType} для производства ${resource}.`);
+                return;
+            }
+            if (userData.production[resource].isProducing) {
+                alert(`Производство ${resource} уже идет.`);
+                return;
+            }
+            userData.production[resource].startTime = Date.now();
+            userData.production[resource].isProducing = true;
             saveUserData();
             updateFarmTab();
-        }, productionTime);
-    }
-
-    // Производство животных
-    function produceAnimal(animal) {
-        const requiredCrop = userData.animals[animal].requiredCrop;
-        if (userData.crops[requiredCrop].amount <= 0) {
-            alert(`Недостаточно ${requiredCrop} для производства!`);
-            return;
         }
-        userData.crops[requiredCrop].amount -= 1;
-        userData.animals[animal].amount += 1;
-        saveUserData();
-        updateFarmTab();
-    }
 
-    // Переключение табов внутри "Фермы"
-    document.querySelectorAll('.tabs button').forEach(button => {
-        button.addEventListener('click', () => {
-            const tab = button.getAttribute('data-tab');
-            document.querySelectorAll('.tab-panel').forEach(panel => {
-                panel.classList.toggle('active', panel.id === tab);
-            });
-            updateFarmTab();
-        });
-    });
 
-    // Обновление склада (оставлено как есть)
-    function updateWarehouseTab() {
-        const warehouseDiv = document.getElementById('warehouse-content');
-        const capacity = [1000, 3000, 5000, 7000, 10000][userData.warehouse_level - 1];
-        const used = Object.values(userData.resources).reduce((sum, val) => sum + val, 0);
-        let html = `<p>Вместимость: ${capacity}, Свободно: ${capacity - used}</p><ul>`;
-        for (const [res, amount] of Object.entries(userData.resources)) {
-            if (amount > 0) html += `<li>${res}: ${amount}</li>`;
-        }
-        html += '</ul>';
-        warehouseDiv.innerHTML = html;
-    }
-
-    // Обновление города (оставлено как есть)
-    function updateTownTab() {
-        document.getElementById('daily-reward').addEventListener('click', () => {
-            const now = Date.now();
-            if (now - userData.lastDailyClaim >= 24 * 60 * 60 * 1000) {
-                userData.coins += 300;
-                userData.lastDailyClaim = now;
-                saveUserData();
-                updateCoinDisplay();
-                alert('Получено 300 монет!');
-            } else {
-                alert('Награда доступна раз в день.');
+        function updateWarehouseTab() {
+            const warehouseDiv = document.getElementById('warehouse-content');
+            warehouseDiv.innerHTML = '';
+            const capacity = warehouseLevels[userData.warehouse_level - 1];
+            const used = Object.values(userData.resources).reduce((sum, val) => sum + val, 0);
+            const free = capacity - used;
+            let html = `<p>Вместимость: ${capacity}, Свободно: ${free}</p><ul class="resource-list">`;
+            for (const [resource, amount] of Object.entries(userData.resources)) {
+                if (amount > 0) {
+                    html += `<li>${resource}: ${amount}</li>`;
+                }
             }
-        });
-    }
+            html += '</ul>';
+            warehouseDiv.innerHTML = html;
+        }
 
-    // Обновление каждую секунду для таймеров
-    setInterval(updateFarmTab, 1000);
 
-    // Инициализация
-    updateFarmTab();
-</script>
+        function updateTownTab() {
+            document.getElementById('daily-reward').addEventListener('click', () => {
+                const now = Date.now();
+                const oneDay = 24 * 60 * 60 * 1000;
+                if (now - userData.lastDailyClaim >= oneDay) {
+                    userData.coins += 300;
+                    userData.lastDailyClaim = now;
+                    saveUserData();
+                    updateCoinDisplay();
+                    alert('Получена ежедневная награда: 300 монет');
+                } else {
+                    alert('Вы можете получить ежедневную награду раз в день.');
+                }
+            });
+
+            document.getElementById('fortune-wheel').addEventListener('click', () => {
+                const now = Date.now();
+                const oneDay = 24 * 60 * 60 * 1000;
+                if (now - (userData.lastFortuneSpin || 0) >= oneDay) {
+                    const prizes = [
+                        { name: 'Монеты', amount: Math.floor(Math.random() * 401) + 100, type: 'coins' },
+                        { name: 'Кристаллы', amount: 10, type: 'crystals' }
+                    ];
+                    const prize = prizes[Math.floor(Math.random() * prizes.length)];
+                    if (prize.type === 'coins') {
+                        userData.coins += prize.amount;
+                    } else {
+                        userData.crystals += prize.amount;
+                    }
+                    userData.lastFortuneSpin = now;
+                    saveUserData();
+                    updateCoinDisplay();
+                    alert(`Вы выиграли ${prize.amount} ${prize.name}`);
+                } else {
+                    alert('Колесо фортуны можно крутить раз в день.');
+                }
+            });
+
+            const ratingList = document.getElementById('rating-list');
+            ratingList.innerHTML = '';
+            const simulatedRating = [
+                { name: 'Игрок 1', coins: 1000 },
+                { name: 'Игрок 2', coins: 800 },
+                { name: 'Вы', coins: userData.coins }
+            ].sort((a, b) => b.coins - a.coins);
+            simulatedRating.forEach((player, index) => {
+                const li = document.createElement('li');
+                li.textContent = `${index + 1}. ${player.name} - ${player.coins} монет`;
+                ratingList.appendChild(li);
+            });
+        }
+
+        function buyCrystals(amount, price) {
+            alert(`Для покупки ${amount} кристаллов за ${price}₽, переведите деньги по реквизитам и отправьте чек.`);
+        }
+
+
+        const marketItems = [
+            { id: 1, resource: 'eggs', amount: 10, price: 5, seller: 'Игрок 1' },
+            { id: 2, resource: 'wool', amount: 5, price: 10, seller: 'Игрок 2' }
+        ];
+
+        function updateMarketTab() {
+            const marketItemsDiv = document.getElementById('market-items');
+            marketItemsDiv.innerHTML = '';
+            marketItems.forEach(item => {
+                const div = document.createElement('div');
+                div.className = 'market-item';
+                div.innerHTML = `<p>${item.resource}: ${item.amount} по ${item.price} монет (Продавец: ${item.seller})</p>
+                    <button onclick="buyResource(${item.id})">Купить</button>`;
+                marketItemsDiv.appendChild(div);
+            });
+        }
+
+        function buyResource(itemId) {
+            const item = marketItems.find(i => i.id === itemId);
+            const totalCost = item.amount * item.price;
+            if (userData.coins < totalCost) {
+                alert('Недостаточно монет.');
+                return;
+            }
+            const capacity = warehouseLevels[userData.warehouse_level - 1];
+            const used = Object.values(userData.resources).reduce((sum, val) => sum + val, 0);
+            const free = capacity - used;
+            if (item.amount > free) {
+                alert('Недостаточно места на складе.');
+                return;
+            }
+            userData.coins -= totalCost;
+            userData.resources[item.resource] += item.amount;
+            saveUserData();
+            updateCoinDisplay();
+            updateWarehouseTab();
+            alert(`Куплено ${item.amount} ${item.resource} за ${totalCost} монет.`);
+        }
+
+        function showMyShop() {
+            document.getElementById('my-shop').style.display = 'block';
+            const shopItemsDiv = document.getElementById('shop-items');
+            shopItemsDiv.innerHTML = '';
+            userData.myShopItems.forEach(item => {
+                const div = document.createElement('div');
+                div.innerHTML = `<p>${item.resource}: ${item.amount} по ${item.price} монет</p>
+                    <button onclick="removeResourceFromShop(${item.id})">Снять с продажи</button>`;
+                shopItemsDiv.appendChild(div);
+            });
+        }
+
+        function showAddResourceForm() {
+            document.getElementById('add-resource-form').style.display = 'block';
+        }
+
+        function addResourceForSale() {
+            const resource = document.getElementById('resource-type').value;
+            const amount = parseInt(document.getElementById('resource-amount').value);
+            const price = parseInt(document.getElementById('resource-price').value);
+            if (isNaN(amount) || amount <= 0 || isNaN(price) || price <= 0) {
+                alert('Введите корректные данные.');
+                return;
+            }
+            if (userData.resources[resource] < amount) {
+                alert('Недостаточно ресурсов.');
+                return;
+            }
+            userData.resources[resource] -= amount;
+            userData.myShopItems.push({ id: Date.now(), resource, amount, price });
+            saveUserData();
+            updateWarehouseTab();
+            showMyShop();
+            document.getElementById('add-resource-form').style.display = 'none';
+        }
+
+        function removeResourceFromShop(itemId) {
+            const item = userData.myShopItems.find(i => i.id === itemId);
+            const capacity = warehouseLevels[userData.warehouse_level - 1];
+            const used = Object.values(userData.resources).reduce((sum, val) => sum + val, 0);
+            const free = capacity - used;
+            if (item.amount > free) {
+                alert('Недостаточно места на складе.');
+                return;
+            }
+            userData.resources[item.resource] += item.amount;
+            userData.myShopItems = userData.myShopItems.filter(i => i.id !== itemId);
+            saveUserData();
+            updateWarehouseTab();
+            showMyShop();
+        }
+    </script>
 </body>
 </html>
