@@ -28,8 +28,8 @@
             flex-direction: column;
             height: 100vh;
             padding-top: calc(var(--tg-safe-area-inset-top, 0px) + var(--tg-content-safe-area-inset-top, 0px) + 15px);
-            padding-left: var(--tg-safe-area-left, 0px);
-            padding-right: var(--tg-safe-area-right, 0px);
+            padding-left: 16px;
+            padding-right: 16px;
         }
         #header {
             padding: 10px;
@@ -49,7 +49,7 @@
             height: 64px;
             margin: 16px;
             position: fixed;
-            bottom: env(safe-area-inset-bottom, 0px);
+            bottom: calc(env(safe-area-inset-bottom, 0px) + 16px);
             left: 0;
             right: 0;
         }
