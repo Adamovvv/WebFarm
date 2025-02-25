@@ -27,6 +27,7 @@
             display: flex;
             flex-direction: column;
             height: 100vh;
+            padding-top: calc(var(--tg-safe-area-inset-top, 0px) + var(--tg-content-safe-area-inset-top, 0px) + 15px);
         }
         #header {
             padding: 10px;
@@ -87,7 +88,7 @@
             cursor: not-allowed;
         }
         .tg-content-safe-area {
-            padding-top: var(--tg-safe-area-inset-top, 0px);
+            padding-top: var(--tg-safe-area-top, 0px);
             padding-bottom: var(--tg-safe-area-bottom, 0px);
             padding-left: var(--tg-safe-area-left, 0px);
             padding-right: var(--tg-safe-area-right, 0px);
@@ -95,7 +96,7 @@
     </style>
 </head>
 <body>
-    <div id="app" class="tg-content-safe-area">
+    <div id="app">
         <div id="header">
             <span id="coin-count">Монеты: 0</span>
             <span id="crystal-count">Кристаллы: 0</span>
