@@ -5,103 +5,19 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Фермерский магнат</title>
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
-    <style>
-        body {
-            margin: 0;
-            padding: 0;
-            background-color: var(--bg-color);
-            color: var(--text-color);
-            font-family: sans-serif;
-            overflow: hidden; /* Отключаем прокрутку страницы */
-        }
-        :root {
-            --bg-color: #ffffff;
-            --text-color: #000000;
-            --bottom-safe: calc(var(--lvh, 100vh) - var(--tg-viewport-height, 100vh));
-        }
-        .dark {
-            --bg-color: #000000;
-            --text-color: #ffffff;
-        }
-        #app {
-            display: flex;
-            flex-direction: column;
-            height: 100vh;
-            padding-top: calc(var(--tg-safe-area-inset-top, 0px) + var(--tg-content-safe-area-inset-top, 0px) + 15px);
-            padding-left: 16px;
-            padding-right: 16px;
-        }
-        #header {
-            padding: 10px;
-            background-color: var(--header-bg);
-            color: var(--header-text);
-        }
-        .tab-content {
-            flex: 1;
-            overflow: auto;
-            /*padding: 16px;*/
-        }
-        .bottom-bar {
-            display: flex;
-            justify-content: space-around;
-            background-color: #ccc;
-            border-radius: 16px;
-            height: 64px;
-            margin: 16px;
-            position: fixed;
-            bottom: calc(env(safe-area-inset-bottom, 0px) + 16px);
-            left: 0;
-            right: 0;
-        }
-        .bottom-bar button {
-            padding: 12px;
-            background-color: var(--button-bg);
-            color: var(--button-text);
-            border: none;
-            cursor: pointer;
-        }
-        #clicker {
-            width: 240px;
-            height: 240px;
-            margin: 20px auto;
-            cursor: pointer;
-            background-image: url(farmer.png);
-            background-size: cover;
-        }
-        .animal-block {
-            margin: 10px 0;
-            padding: 10px;
-            border: 1px solid #ccc;
-        }
-        .resource-list {
-            list-style: none;
-            padding: 0;
-        }
-        .resource-list li {
-            margin: 5px 0;
-        }
-        .daily-reward, .market-item {
-            margin: 10px 0;
-            padding: 10px;
-            border: 1px solid #ccc;
-        }
-        button:disabled {
-            opacity: 0.6;
-            cursor: not-allowed;
-        }
-        .tg-content-safe-area {
-            padding-top: var(--tg-safe-area-top, 0px);
-            padding-bottom: var(--tg-safe-area-bottom, 0px);
-            padding-left: var(--tg-safe-area-left, 0px);
-            padding-right: var(--tg-safe-area-right, 0px);
-            }
-    </style>
+    <link rel="stylesheet" href="styles.css">
 </head>
 <body>
     <div id="app">
         <div id="header">
-            <span id="coin-count">Монеты: 0</span>
-            <span id="crystal-count">Кристаллы: 0</span>
+            <div class="lyi0vd">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor"><path d="M14.0049 2.00281C18.4232 2.00281 22.0049 5.58453 22.0049 10.0028C22.0049 13.2474 20.0733 16.0409 17.2973 17.296C16.0422 20.0718 13.249 22.0028 10.0049 22.0028C5.5866 22.0028 2.00488 18.4211 2.00488 14.0028C2.00488 10.7587 3.9359 7.96554 6.71122 6.71012C7.96681 3.93438 10.7603 2.00281 14.0049 2.00281ZM11.0049 9.00281H9.00488V10.0028C7.62417 10.0028 6.50488 11.1221 6.50488 12.5028C6.50488 13.8283 7.53642 14.9128 8.84051 14.9975L9.00488 15.0028H11.0049L11.0948 15.0109C11.328 15.0532 11.5049 15.2573 11.5049 15.5028C11.5049 15.7483 11.328 15.9524 11.0948 15.9948L11.0049 16.0028H7.00488V18.0028H9.00488V19.0028H11.0049V18.0028C12.3856 18.0028 13.5049 16.8835 13.5049 15.5028C13.5049 14.1773 12.4733 13.0928 11.1693 13.0081L11.0049 13.0028H9.00488L8.91501 12.9948C8.68176 12.9524 8.50488 12.7483 8.50488 12.5028C8.50488 12.2573 8.68176 12.0532 8.91501 12.0109L9.00488 12.0028H13.0049V10.0028H11.0049V9.00281ZM14.0049 4.00281C12.2214 4.00281 10.6196 4.78097 9.52064 6.01629C9.68133 6.00764 9.84254 6.00281 10.0049 6.00281C14.4232 6.00281 18.0049 9.58453 18.0049 14.0028C18.0049 14.1655 18 14.327 17.9905 14.4873C19.2265 13.3885 20.0049 11.7866 20.0049 10.0028C20.0049 6.6891 17.3186 4.00281 14.0049 4.00281Z"></path></svg>
+                <span id="coin-count">Монеты: 0</span>
+            </div>
+            <div class="lyi0vd">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor"><path d="M12.0049 22.0027C6.48204 22.0027 2.00488 17.5256 2.00488 12.0027C2.00488 6.4799 6.48204 2.00275 12.0049 2.00275C17.5277 2.00275 22.0049 6.4799 22.0049 12.0027C22.0049 17.5256 17.5277 22.0027 12.0049 22.0027ZM9.50488 9.00275L7.00488 11.5027L12.0041 16.5027L17.0049 11.5027L14.5049 9.00275H9.50488Z"></path></svg>
+                <span id="crystal-count">Кристаллы: 0</span>
+            </div>
         </div>
         <div class="tab-content" id="farmer-tab">
             <h2>Фермер</h2>
