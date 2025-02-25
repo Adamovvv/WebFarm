@@ -102,7 +102,6 @@
         <div id="header">
             <span id="coin-count">Монеты: 0</span>
             <span id="crystal-count">Кристаллы: 0</span>
-            <span id="energy-count">Энергия: 500</span>
         </div>
         <div class="tab-content" id="farmer-tab">
             <h2>Фермер</h2>
@@ -120,36 +119,16 @@
             <h2>Город</h2>
             <button id="daily-reward">Получить ежедневную награду</button>
             <button id="fortune-wheel">Крутить колесо фортуны</button>
-            <div id="rating">
-                <h3>Рейтинг</h3>
-                <ul id="rating-list"></ul>
-            </div>
             <div id="crystal-shop">
                 <h3>Магазин кристаллов</h3>
                 <button onclick="buyCrystals(10, 100)">Купить 10 💎 за 100₽</button>
                 <button onclick="buyCrystals(50, 450)">Купить 50 💎 за 450₽</button>
             </div>
         </div>
-        <div class="tab-content" id="market-tab" style="display: none;">
-            <h2>Рынок</h2>
-            <div id="market-items"></div>
-            <button onclick="showMyShop()">Моя лавка</button>
-            <div id="my-shop" style="display: none;">
-                <h3>Моя лавка</h3>
-                <div id="shop-items"></div>
-                <button onclick="showAddResourceForm()">Добавить ресурс</button>
-                <div id="add-resource-form" style="display: none;">
-                    <h4>Добавить ресурс</h4>
-                    <select id="resource-type">
-                        <option value="eggs">Яйца</option>
-                        <option value="wool">Шерсть</option>
-                        <option value="milk">Молоко</option>
-                        <option value="honey">Мед</option>
-                    </select>
-                    <input type="number" id="resource-amount" min="1" placeholder="Количество">
-                    <input type="number" id="resource-price" min="1" placeholder="Цена за единицу">
-                    <button onclick="addResourceForSale()">Выставить на продажу</button>
-                </div>
+        <div class="tab-content" id="top-tab" style="display: none;">
+            <div id="rating">
+                <h3>Рейтинг</h3>
+                <ul id="rating-list"></ul>
             </div>
         </div>
         <div class="bottom-bar">
@@ -157,7 +136,7 @@
             <button data-target="warehouse-tab">Склад</button>
             <button data-target="farmer-tab">Фермер</button>
             <button data-target="town-tab">Город</button>
-            <button data-target="market-tab">Рынок</button>
+            <button data-target="top-tab">Топ</button>
         </div>
     </div>
     <script>
@@ -178,7 +157,6 @@
             userData = {
                 coins: 0,
                 crystals: 0,
-                energy: 500,
                 warehouse_level: 1,
                 farm_level: 1,
                 animals: {
@@ -215,21 +193,15 @@
         function updateCoinDisplay() {
             document.getElementById('coin-count').textContent = `Монеты: ${userData.coins}`;
             document.getElementById('crystal-count').textContent = `Кристаллы: ${userData.crystals}`;
-            document.getElementById('energy-count').textContent = `Энергия: ${userData.energy}`;
         }
         updateCoinDisplay();
 
 
 
         document.getElementById('clicker').addEventListener('click', () => {
-            if (userData.energy > 0) {
-                userData.coins += 1;
-                userData.energy -= 1;
-                saveUserData();
-                updateCoinDisplay();
-            } else {
-                alert('Энергия закончилась!'); // Можно заменить на более красивое уведомление
-            }
+            userData.coins += 1;
+            saveUserData();
+            updateCoinDisplay();
         });
 
 
@@ -506,20 +478,6 @@
             updateWarehouseTab();
             showMyShop();
         }
-
-        document.querySelectorAll('.bottom-bar button').forEach(button => {
-            button.addEventListener('click', () => {
-                const target = button.getAttribute('data-target');
-                document.querySelectorAll('.tab-content').forEach(tab => {
-                    tab.style.display = tab.id === target ? 'block' : 'none';
-                });
-                if (target === 'farmer-tab') {
-                    document.getElementById('energy-count').style.display = 'inline';
-                } else {
-                    document.getElementById('energy-count').style.display = 'none';
-                }
-            });
-        });
     </script>
 </body>
 </html>
