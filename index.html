@@ -106,6 +106,7 @@
         <div class="tab-content" id="farmer-tab">
             <h2>Фермер</h2>
             <div id="clicker"></div>
+            <span id="energy-count">Энергия: 500</span>
         </div>
         <div class="tab-content" id="farm-tab" style="display: none;">
             <h2>Ферма</h2>
@@ -177,6 +178,7 @@
             userData = {
                 coins: 0,
                 crystals: 0,
+                energy: 500,
                 warehouse_level: 1,
                 farm_level: 1,
                 animals: {
@@ -213,15 +215,21 @@
         function updateCoinDisplay() {
             document.getElementById('coin-count').textContent = `Монеты: ${userData.coins}`;
             document.getElementById('crystal-count').textContent = `Кристаллы: ${userData.crystals}`;
+            document.getElementById('energy-count').textContent = `Энергия: ${userData.energy}`;
         }
         updateCoinDisplay();
 
 
 
         document.getElementById('clicker').addEventListener('click', () => {
-            userData.coins += 1;
-            saveUserData();
-            updateCoinDisplay();
+            if (userData.energy > 0) {
+                userData.coins += 1;
+                userData.energy -= 1;
+                saveUserData();
+                updateCoinDisplay();
+            } else {
+                alert('Энергия закончилась!'); // Можно заменить на более красивое уведомление
+            }
         });
 
 
