@@ -93,8 +93,9 @@ button:disabled {
     display: flex;
     align-items: center;
     gap: 8px;
-    padding: 8px 16px;
+    padding: 8px 12px;
     background: #ccc;
+    font-size: 14px;
     border-radius: 16px;
 }
 .lyi0vd svg {
