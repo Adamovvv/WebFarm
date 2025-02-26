@@ -118,7 +118,7 @@
             userData.coins += 1; // Увеличиваем монеты
             saveUserData(); // Сохраняем данные
             updateCoinDisplay(); // Обновляем отображение монет
-            Telegram.WebApp.HapticFeedback.impactOccurred('heavy'); // Легкая вибрация
+            Telegram.WebApp.HapticFeedback.impactOccurred('light'); // Легкая вибрация
         });
 
 
@@ -181,10 +181,10 @@
             const animalTypes = ['chickens', 'sheep', 'cows', 'bees'];
             animalTypes.forEach(type => {
                 const count = userData.animals[type];
+                const resource = type === 'chickens' ? 'eggs' : type === 'sheep' ? 'wool' : type === 'cows' ? 'milk' : 'honey';
+                let status = '';
                 if (count > 0) {
-                    const resource = type === 'chickens' ? 'eggs' : type === 'sheep' ? 'wool' : type === 'cows' ? 'milk' : 'honey';
                     const production = userData.production[resource];
-                    let status = '';
                     if (production.isProducing) {
                         const duration = getProductionTime(resource, userData.farm_level);
                         const endTime = production.startTime + duration;
@@ -206,11 +206,13 @@
                     } else {
                         status = `<button onclick="startProduction('${resource}')">Произвести ${resource}</button>`;
                     }
-                    const animalBlock = document.createElement('div');
-                    animalBlock.className = 'animal-block';
-                    animalBlock.innerHTML = `<p>${type.charAt(0).toUpperCase() + type.slice(1)}: ${count}</p><p>${status}</p>`;
-                    animalsDiv.appendChild(animalBlock);
+                } else {
+                    status = 'Нет животных для производства.';
                 }
+                const animalBlock = document.createElement('div');
+                animalBlock.className = 'animal-block';
+                animalBlock.innerHTML = `<p>${type.charAt(0).toUpperCase() + type.slice(1)}</p><p>${status}</p>`;
+                animalsDiv.appendChild(animalBlock);
             });
         }
 
