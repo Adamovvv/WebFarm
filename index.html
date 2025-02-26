@@ -175,7 +175,7 @@
             const animalsDiv = document.getElementById('animals');
             animalsDiv.innerHTML = '';
             
-            Object.keys(unlockCosts).forEach(type => {
+            Object.keys(userData.animals).forEach(type => {
                 let status = '';
                 
                 if (userData.animals[type]) {

@@ -26,7 +26,6 @@ body {
 #header {
     display: flex;
     gap: 16px;
-    padding: 10px;
     background-color: var(--header-bg);
     color: var(--header-text);
 }
