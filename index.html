@@ -128,9 +128,10 @@
 
 
         document.getElementById('clicker').addEventListener('click', () => {
-            userData.coins += 1;
-            saveUserData();
-            updateCoinDisplay();
+            userData.coins += 1; // Увеличиваем монеты
+            saveUserData(); // Сохраняем данные
+            updateCoinDisplay(); // Обновляем отображение монет
+            Telegram.WebApp.HapticFeedback.impactOccurred('light'); // Легкая вибрация
         });
 
 
@@ -219,21 +220,56 @@
         }
 
         function updateAnimalsTab() {
-            const animalsDiv = document.getElementById('animals');
+            const animalsDiv = document.getElementById('animals'); // Элемент вкладки животных
             animalsDiv.innerHTML = '';
-            const animalTypes = ['chickens', 'sheep', 'cows', 'bees']; // Все типы животных
+            const animalTypes = ['chickens', 'sheep', 'cows', 'bees']; // Типы животных
+
             animalTypes.forEach(type => {
-                const count = userData.animals[type]; // Количество животных данного типа
+                const count = userData.animals[type]; // Количество животных
+                const resource = type === 'chickens' ? 'eggs' : type === 'sheep' ? 'wool' : type === 'cows' ? 'milk' : 'honey'; // Ресурс
+                const production = userData.production[resource];
                 let status = '';
-                if (count > 0) {
-                    // Логика производства (если животные есть)
-                    status = 'Производство доступно';
+
+                if (production.isProducing) {
+                    const duration = getProductionTime(resource, userData.farm_level); // Время производства
+                    const endTime = production.startTime + duration;
+                    const currentTime = Date.now();
+
+                    if (currentTime >= endTime) {
+                        // Производство завершено
+                        const amount = count; // Производим по количеству животных
+                        const capacity = warehouseLevels[userData.warehouse_level - 1];
+                        const used = Object.values(userData.resources).reduce((sum, val) => sum + val, 0);
+                        const free = capacity - used;
+                        const toAdd = Math.min(amount, free);
+                        userData.resources[resource] += toAdd;
+                        production.isProducing = false;
+                        saveUserData();
+                        status = `Производство завершено. Добавлено ${toAdd} ${resource}.`;
+                    } else {
+                        // Производство в процессе
+                        const remaining = endTime - currentTime;
+                        status = `Идет производство... Осталось: ${Math.ceil(remaining / 1000)} секунд`;
+                    }
                 } else {
-                    status = 'Нет животных'; // Сообщение, если животных нет
+                    if (count > 0) {
+                        // Есть животные, показываем кнопку
+                        const requirement = resourceRequirements[resource]; // Требования (например, {crop: 'wheat', amount: 2})
+                        const requiredAmount = requirement.amount * count;
+                        const hasEnoughCrops = userData.resources[requirement.crop] >= requiredAmount;
+                        status = `<button onclick="startAnimalProduction('${resource}')" ${!hasEnoughCrops ? 'disabled' : ''}>Произвести ${resource}</button>`;
+                        if (!hasEnoughCrops) {
+                            status += `<p>Недостаточно ${requirement.crop} (нужно ${requiredAmount})</p>`;
+                        }
+                    } else {
+                        status = 'Нет животных';
+                    }
                 }
+
+                // Создаем блок для животного
                 const animalBlock = document.createElement('div');
                 animalBlock.className = 'animal-block';
-                animalBlock.innerHTML = `<p>${type}: ${count}</p><p>${status}</p>`;
+                animalBlock.innerHTML = `<p>${type.charAt(0).toUpperCase() + type.slice(1)}: ${count}</p><p>${status}</p>`;
                 animalsDiv.appendChild(animalBlock);
             });
         }
@@ -404,20 +440,46 @@
         }
 
         function updateCropsTab() {
-            const cropsDiv = document.getElementById('crops');
-            cropsDiv.innerHTML = '';
-            const cropTypes = ['wheat', 'corn', 'carrot']; // Все типы культур
+            const cropsDiv = document.getElementById('crops'); // Элемент вкладки культур
+            cropsDiv.innerHTML = ''; // Очищаем содержимое
+            const cropTypes = ['wheat', 'corn', 'carrot']; // Список всех культур
+
             cropTypes.forEach(type => {
+                const production = userData.production[type]; // Данные о производстве
                 let status = '';
-                const production = userData.production[type];
+
+                // Проверяем, идет ли производство
                 if (production.isProducing) {
-                    status = 'Идет производство...';
+                    const duration = getCropProductionTime(type); // Функция получения времени производства
+                    const endTime = production.startTime + duration;
+                    const currentTime = Date.now();
+
+                    if (currentTime >= endTime) {
+                        // Производство завершено
+                        const amount = 10; // Количество произведенного ресурса
+                        const capacity = warehouseLevels[userData.warehouse_level - 1]; // Вместимость склада
+                        const used = Object.values(userData.resources).reduce((sum, val) => sum + val, 0);
+                        const free = capacity - used;
+                        const toAdd = Math.min(amount, free); // Добавляем, сколько помещается
+                        userData.resources[type] += toAdd;
+                        production.isProducing = false;
+                        saveUserData(); // Сохраняем данные
+                        status = `Производство завершено. Добавлено ${toAdd} ${type}.`;
+                    } else {
+                        // Производство в процессе
+                        const remaining = endTime - currentTime;
+                        status = `Идет производство... Осталось: ${Math.ceil(remaining / 1000)} секунд`;
+                    }
                 } else {
-                    status = `<button onclick="startCropProduction('${type}')">Произвести ${type}</button>`;
+                    // Производство не запущено, показываем кнопку
+                    const cost = getCropProductionCost(type); // Функция получения стоимости
+                    status = `<button onclick="startCropProduction('${type}')" ${userData.coins < cost ? 'disabled' : ''}>Произвести ${type} (стоимость: ${cost} монет)</button>`;
                 }
+
+                // Создаем блок для культуры
                 const cropBlock = document.createElement('div');
                 cropBlock.className = 'crop-block';
-                cropBlock.innerHTML = `<p>${type}</p><p>${status}</p>`;
+                cropBlock.innerHTML = `<p>${type.charAt(0).toUpperCase() + type.slice(1)}</p><p>${status}</p>`;
                 cropsDiv.appendChild(cropBlock);
             });
         }
