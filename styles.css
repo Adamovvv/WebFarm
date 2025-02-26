@@ -101,3 +101,33 @@ button:disabled {
     width: 24px;
     height: 24px;
 }
+.farm-tabs {
+    display: flex;
+    justify-content: space-around;
+    margin-bottom: 10px;
+}
+
+.farm-tabs button {
+    padding: 10px;
+    background-color: #ccc;
+    border: none;
+    cursor: pointer;
+}
+
+.farm-tabs button.active {
+    background-color: #aaa;
+}
+
+.farm-tab-content {
+    display: none;
+}
+
+.farm-tab-content.active {
+    display: block;
+}
+
+.crop-block {
+    margin: 10px 0;
+    padding: 10px;
+    border: 1px solid #ccc;
+}
