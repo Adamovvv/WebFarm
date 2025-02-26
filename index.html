@@ -25,7 +25,20 @@
         </div>
         <div class="tab-content" id="farm-tab" style="display: none;">
             <h2>Ферма</h2>
-            <div id="animals"></div>
+            <div id="animals">
+                <div class="animal-block">
+                    <p>Курицы</p>
+                    <button onclick="startProduction('eggs')">Произвести ресурс</button>
+                </div>
+                <div class="animal-block">
+                    <p>Овцы</p>
+                    <button onclick="unlockAnimal('sheep')">Разблокировать за 500 монет</button>
+                </div>
+                <div class="animal-block">
+                    <p>Коровы</p>
+                    <button onclick="unlockAnimal('cows')">Разблокировать за 1000 монет</button>
+                </div>
+            </div>
         </div>
         <div class="tab-content" id="warehouse-tab" style="display: none;">
             <h2>Склад</h2>
@@ -78,20 +91,17 @@
                 animals: {
                     chickens: true,
                     sheep: false,
-                    cows: false,
-                    bees: false
+                    cows: false
                 },
                 resources: {
                     eggs: 0,
                     wool: 0,
-                    milk: 0,
-                    honey: 0
+                    milk: 0
                 },
                 production: {
                     eggs: { startTime: 0, isProducing: false },
                     wool: { startTime: 0, isProducing: false },
-                    milk: { startTime: 0, isProducing: false },
-                    honey: { startTime: 0, isProducing: false }
+                    milk: { startTime: 0, isProducing: false }
                 },
                 lastDailyClaim: 0
             };
@@ -159,13 +169,6 @@
                     3: 6 * 60 * 60 * 1000,
                     4: 5 * 60 * 60 * 1000,
                     5: 4 * 60 * 60 * 1000
-                },
-                honey: {
-                    1: 12 * 60 * 60 * 1000,
-                    2: 10 * 60 * 60 * 1000,
-                    3: 8 * 60 * 60 * 1000,
-                    4: 6 * 60 * 60 * 1000,
-                    5: 4 * 60 * 60 * 1000
                 }
             };
             return productionTimes[resource][farmLevel];
@@ -179,7 +182,7 @@
                 let status = '';
                 
                 if (userData.animals[type]) {
-                    status = `<button onclick="startProduction('${type}')">Произвести ресурс</button>`;
+                    status = `<button onclick="startProduction('${type === 'chickens' ? 'eggs' : type === 'sheep' ? 'wool' : type === 'cows'}')">Произвести ресурс</button>`;
                 } else {
                     status = `<button onclick="unlockAnimal('${type}')">Разблокировать за ${unlockCosts[type]} монет</button>`;
                 }
@@ -190,6 +193,11 @@
                 animalsDiv.appendChild(animalBlock);
             });
         }
+
+        const unlockCosts = {
+            sheep: 500,
+            cows: 1000
+        };
 
         function unlockAnimal(animal) {
             if (userData.coins >= unlockCosts[animal]) {
@@ -204,7 +212,7 @@
         }
 
         function startProduction(resource) {
-            const animalType = resource === 'eggs' ? 'chickens' : resource === 'wool' ? 'sheep' : resource === 'milk' ? 'cows' : 'bees';
+            const animalType = resource === 'eggs' ? 'chickens' : resource === 'wool' ? 'sheep' : resource === 'milk';
             if (userData.animals[animalType] === 0) {
                 alert(`У вас нет ${animalType} для производства ${resource}.`);
                 return;
