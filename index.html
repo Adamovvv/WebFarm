@@ -76,18 +76,16 @@
                 warehouse_level: 1,
                 farm_level: 1,
                 animals: {
-                    chickens: 5,
-                    sheep: 0,
-                    cows: 0,
-                    bees: 0
+                    chickens: true,
+                    sheep: false,
+                    cows: false,
+                    bees: false
                 },
                 resources: {
                     eggs: 0,
                     wool: 0,
                     milk: 0,
-                    honey: 0,
-                    boards: 0,
-                    nails: 0
+                    honey: 0
                 },
                 production: {
                     eggs: { startTime: 0, isProducing: false },
@@ -95,9 +93,7 @@
                     milk: { startTime: 0, isProducing: false },
                     honey: { startTime: 0, isProducing: false }
                 },
-                lastDailyClaim: 0,
-                shop_slots: 3,
-                myShopItems: []
+                lastDailyClaim: 0
             };
             localStorage.setItem(storageKey, JSON.stringify(userData));
         }
@@ -178,42 +174,33 @@
         function updateFarmTab() {
             const animalsDiv = document.getElementById('animals');
             animalsDiv.innerHTML = '';
-            const animalTypes = ['chickens', 'sheep', 'cows', 'bees'];
-            animalTypes.forEach(type => {
-                const count = userData.animals[type];
-                const resource = type === 'chickens' ? 'eggs' : type === 'sheep' ? 'wool' : type === 'cows' ? 'milk' : 'honey';
+            
+            Object.keys(userData.animals).forEach(type => {
                 let status = '';
-                if (count > 0) {
-                    const production = userData.production[resource];
-                    if (production.isProducing) {
-                        const duration = getProductionTime(resource, userData.farm_level);
-                        const endTime = production.startTime + duration;
-                        const currentTime = Date.now();
-                        if (currentTime >= endTime) {
-                            const amount = count;
-                            const capacity = warehouseLevels[userData.warehouse_level - 1];
-                            const used = Object.values(userData.resources).reduce((sum, val) => sum + val, 0);
-                            const free = capacity - used;
-                            const toAdd = Math.min(amount, free);
-                            userData.resources[resource] += toAdd;
-                            production.isProducing = false;
-                            saveUserData();
-                            status = `Производство завершено. Добавлено ${toAdd} ${resource}.`;
-                        } else {
-                            const remaining = endTime - currentTime;
-                            status = `Идет производство... Осталось: ${Math.ceil(remaining / 1000)} секунд`;
-                        }
-                    } else {
-                        status = `<button onclick="startProduction('${resource}')">Произвести ${resource}</button>`;
-                    }
+                
+                if (userData.animals[type]) {
+                    status = `<button onclick="startProduction('${type}')">Произвести ресурс</button>`;
                 } else {
-                    status = 'Нет животных для производства.';
+                    status = `<button onclick="unlockAnimal('${type}')">Разблокировать за ${unlockCosts[type]} монет</button>`;
                 }
+                
                 const animalBlock = document.createElement('div');
                 animalBlock.className = 'animal-block';
                 animalBlock.innerHTML = `<p>${type.charAt(0).toUpperCase() + type.slice(1)}</p><p>${status}</p>`;
                 animalsDiv.appendChild(animalBlock);
             });
+        }
+
+        function unlockAnimal(animal) {
+            if (userData.coins >= unlockCosts[animal]) {
+                userData.coins -= unlockCosts[animal];
+                userData.animals[animal] = true;
+                saveUserData();
+                updateCoinDisplay();
+                updateFarmTab();
+            } else {
+                alert('Недостаточно монет!');
+            }
         }
 
         function startProduction(resource) {
@@ -304,98 +291,6 @@
 
         function buyCrystals(amount, price) {
             alert(`Для покупки ${amount} кристаллов за ${price}₽, переведите деньги по реквизитам и отправьте чек.`);
-        }
-
-
-        const marketItems = [
-            { id: 1, resource: 'eggs', amount: 10, price: 5, seller: 'Игрок 1' },
-            { id: 2, resource: 'wool', amount: 5, price: 10, seller: 'Игрок 2' }
-        ];
-
-        function updateMarketTab() {
-            const marketItemsDiv = document.getElementById('market-items');
-            marketItemsDiv.innerHTML = '';
-            marketItems.forEach(item => {
-                const div = document.createElement('div');
-                div.className = 'market-item';
-                div.innerHTML = `<p>${item.resource}: ${item.amount} по ${item.price} монет (Продавец: ${item.seller})</p>
-                    <button onclick="buyResource(${item.id})">Купить</button>`;
-                marketItemsDiv.appendChild(div);
-            });
-        }
-
-        function buyResource(itemId) {
-            const item = marketItems.find(i => i.id === itemId);
-            const totalCost = item.amount * item.price;
-            if (userData.coins < totalCost) {
-                alert('Недостаточно монет.');
-                return;
-            }
-            const capacity = warehouseLevels[userData.warehouse_level - 1];
-            const used = Object.values(userData.resources).reduce((sum, val) => sum + val, 0);
-            const free = capacity - used;
-            if (item.amount > free) {
-                alert('Недостаточно места на складе.');
-                return;
-            }
-            userData.coins -= totalCost;
-            userData.resources[item.resource] += item.amount;
-            saveUserData();
-            updateCoinDisplay();
-            updateWarehouseTab();
-            alert(`Куплено ${item.amount} ${item.resource} за ${totalCost} монет.`);
-        }
-
-        function showMyShop() {
-            document.getElementById('my-shop').style.display = 'block';
-            const shopItemsDiv = document.getElementById('shop-items');
-            shopItemsDiv.innerHTML = '';
-            userData.myShopItems.forEach(item => {
-                const div = document.createElement('div');
-                div.innerHTML = `<p>${item.resource}: ${item.amount} по ${item.price} монет</p>
-                    <button onclick="removeResourceFromShop(${item.id})">Снять с продажи</button>`;
-                shopItemsDiv.appendChild(div);
-            });
-        }
-
-        function showAddResourceForm() {
-            document.getElementById('add-resource-form').style.display = 'block';
-        }
-
-        function addResourceForSale() {
-            const resource = document.getElementById('resource-type').value;
-            const amount = parseInt(document.getElementById('resource-amount').value);
-            const price = parseInt(document.getElementById('resource-price').value);
-            if (isNaN(amount) || amount <= 0 || isNaN(price) || price <= 0) {
-                alert('Введите корректные данные.');
-                return;
-            }
-            if (userData.resources[resource] < amount) {
-                alert('Недостаточно ресурсов.');
-                return;
-            }
-            userData.resources[resource] -= amount;
-            userData.myShopItems.push({ id: Date.now(), resource, amount, price });
-            saveUserData();
-            updateWarehouseTab();
-            showMyShop();
-            document.getElementById('add-resource-form').style.display = 'none';
-        }
-
-        function removeResourceFromShop(itemId) {
-            const item = userData.myShopItems.find(i => i.id === itemId);
-            const capacity = warehouseLevels[userData.warehouse_level - 1];
-            const used = Object.values(userData.resources).reduce((sum, val) => sum + val, 0);
-            const free = capacity - used;
-            if (item.amount > free) {
-                alert('Недостаточно места на складе.');
-                return;
-            }
-            userData.resources[item.resource] += item.amount;
-            userData.myShopItems = userData.myShopItems.filter(i => i.id !== itemId);
-            saveUserData();
-            updateWarehouseTab();
-            showMyShop();
         }
     </script>
 </body>
